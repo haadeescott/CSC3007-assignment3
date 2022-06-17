@@ -38,6 +38,10 @@ var projection = d3.geoMercator()
 
 let geopath = d3.geoPath().projection(projection);
 
+var colorScale = d3.scaleThreshold()
+  .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
+  .range(d3.schemeBlues[7]);
+
 svg.append("path")
     .datum({type: "Sphere"})
     .attr("id", "ocean")
@@ -54,13 +58,18 @@ svg.append("g")
     .attr("stroke", "white")
     .attr("stroke-width", 0.1)
     .attr("fill", "black")
-
+ 
 
 
     .on("mouseover", (event, d) => {
         
     d3.select(".tooltip")
-    .text(getPopulation(d.properties['Planning Area Name']))    
+    .text(
+        "Name: [" + d.properties.Name.toLowerCase() +"]"
+        + " "
+        + "Population: " 
+        + (getPopulation(d.properties['Planning Area Name']))
+        )    
     .style("position", "absolute")
     .style("background", "#fff")
     .style("left", (event.pageX) + "px")
@@ -76,12 +85,20 @@ svg.append("g")
     function getPopulation(x){
             for (i=0; i<data[1].length; i++){
                 if((data[1][i]['Planning Area'].toUpperCase()) == x){
-                    console.log(data[1][i].Population)
                     return data[1][i].Population
                 }
                 
             }
         }
+    
+    function getSubzone(x){
+        for (i=0; i<data[1].length; i++){
+            if((data[1][i]['Planning Area'].toUpperCase()) == x){
+                return data[1][i].Subzone
+            }
+            
+        }
+    }
 
 
     })
@@ -96,6 +113,9 @@ svg.append("g")
     .attr("stroke-width", 0.1)
     .attr("fill", "black")
     })
+
+
+
 })
 
 
