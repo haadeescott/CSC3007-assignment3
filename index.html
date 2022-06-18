@@ -9,44 +9,60 @@
 <svg>
     <defs>
         <linearGradient id="oceanGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="10%" style="stop-color:rgb(0,0,27);stop-opacity:1" />
-          <stop offset="70%" style="stop-color:rgb(51,122,183);stop-opacity:1" />
+          <stop offset="0%" style="stop-color:rgb(0,0,27);stop-opacity:1" />
+          <stop offset="100%" style="stop-color:rgb(51,122,183);stop-opacity:1" />
         </linearGradient>
       </defs>
 </svg>
-<script src="https://d3js.org/d3.v7.min.js"></script>
 
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 <script>
 
-let width = 1000, height = 600;
+let width = 780, height = 350;
 let svg = d3.select("svg")
     .attr("viewBox", "0 0 " + width + " " + height)
+
+//Append a defs (for definition) element to your SVG
+var defs = svg.append("defs");
+
 
 
 // Load external data
 Promise.all([d3.json('sgmap.json'), d3.csv('population2021.csv')]).then(data => {
 
-
-// console.log(data[0]);
-// console.log(data[1]);
+var myColor = d3.scaleSequentialLog()
+    .domain([10,10000])
+    .interpolator(d3.interpolatePuRd);
 
 
 // Map and projection
 var projection = d3.geoMercator()
     .center([103.851959, 1.290270])
-    .fitExtent([[20, 20], [980, 580]], data[0]);
+    .fitExtent([[20, 20], [780, 280]], data[0]);
 
 let geopath = d3.geoPath().projection(projection);
 
-var colorScale = d3.scaleThreshold()
-  .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
-  .range(d3.schemeBlues[7]);
+
 
 svg.append("path")
-    .datum({type: "Sphere"})
-    .attr("id", "ocean")
-    .attr("d", geopath)
-    .attr("fill", "url(#oceanGradient)");
+        .datum({type: "Sphere"})
+        .attr("id", "ocean")
+        .attr("d", geopath)
+        .attr("fill", "lightBlue")
+        .attr("fill", "url(#oceanGradient)");
+
+function getPopulation(x){
+        for (i=0; i<data[1].length; i++){
+            if((data[1][i]['Planning Area'].toUpperCase()) == x){
+                if(data[1][i].Population=='-'){
+                    return 0
+                }else{
+                    return data[1][i].Population
+                }
+            }            
+        }
+    }
 
 svg.append("g")
     .attr("id", "districts")
@@ -55,14 +71,12 @@ svg.append("g")
     .enter()
     .append("path")
     .attr("d", geopath)
-    .attr("stroke", "white")
-    .attr("stroke-width", 0.1)
-    .attr("fill", "black")
- 
-
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.2)
+    .attr("fill", function(data){
+        return myColor(getPopulation(data.properties['Planning Area Name'])) })
 
     .on("mouseover", (event, d) => {
-        
     d3.select(".tooltip")
     .text(
         "Name: [" + d.properties.Name.toLowerCase() +"]"
@@ -75,21 +89,16 @@ svg.append("g")
     .style("left", (event.pageX) + "px")
     .style("top", (event.pageY) + "px")
     
+    
 
     d3.select(event.currentTarget)
     .transition()
     .duration(300)
-    .attr("stroke", "yellow")
+    .attr("stroke", "white")
+    .attr("stroke-width", "0.2")
     .attr("fill", "orange")
 
-    function getPopulation(x){
-            for (i=0; i<data[1].length; i++){
-                if((data[1][i]['Planning Area'].toUpperCase()) == x){
-                    return data[1][i].Population
-                }
-                
-            }
-        }
+    
     
     function getSubzone(x){
         for (i=0; i<data[1].length; i++){
@@ -100,7 +109,6 @@ svg.append("g")
         }
     }
 
-
     })
     .on("mouseout", (event, d) => {
     d3.select(".tooltip")
@@ -109,12 +117,63 @@ svg.append("g")
     d3.select(event.currentTarget)
     .transition()
     .duration(300)
-    .attr("stroke", "white")
-    .attr("stroke-width", 0.1)
-    .attr("fill", "black")
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.2)
+    .attr("fill", function(data){
+        return myColor(getPopulation(data.properties['Planning Area Name'])) })
     })
 
+// Create the scale
+var scale = d3.scaleLinear()
+    .domain([10, 10000])         // This is what is written on the Axis: from 0 to 10
+    .range([0, 99]); 
 
+var x_axis = d3.axisBottom()
+    .scale(scale)
+    .ticks(3, "+f")
+
+//Append a linearGradient element to the defs and give it a unique id
+var linearGradient = defs.append("linearGradient")
+    .attr("id", "linear-gradient")
+
+//Horizontal gradient
+linearGradient
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "100%")
+    .attr("y2", "0%");
+//Set the color for the start (0%)
+linearGradient.append("stop")
+    .attr("offset", "0%")
+    .attr("stop-color", d3.interpolatePuRd(0.1)); //light blue
+
+//Set the color for the end (100%)
+linearGradient.append("stop")
+    .attr("offset", "100%")
+    .attr("stop-color", d3.interpolatePuRd(1)); //dark blue
+
+//Draw the rectangle and fill with gradient
+svg.append("rect")
+    .attr("id", "legend")
+    .attr("width", 100)
+    .attr("height", 10)
+    .style("fill", "url(#linear-gradient)")
+    .attr("transform", "translate(490,295)") 
+
+svg.append("g")
+    .attr("transform", "translate(490, 310)")
+    .attr("stroke-width", 1.5)
+    .attr("font-weight", 650)
+    .call(x_axis)
+
+svg.append("text")
+    .attr("width", 10)
+    .attr("height", 3)
+    .attr("transform", "translate(490,288)") 
+    .text("Population Size")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 12)
+    .attr("font-weight", 650)
 
 })
 
