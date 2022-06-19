@@ -32,7 +32,7 @@ var defs = svg.append("defs");
 Promise.all([d3.json('sgmap.json'), d3.csv('population2021.csv')]).then(data => {
 
 var myColor = d3.scaleSequentialLog()
-    .domain([10,10000])
+    .domain([10, 10000])
     .interpolator(d3.interpolatePuRd);
 
 
@@ -43,7 +43,7 @@ var projection = d3.geoMercator()
 
 let geopath = d3.geoPath().projection(projection);
 
-
+console.log(data[1])
 
 svg.append("path")
         .datum({type: "Sphere"})
@@ -54,15 +54,22 @@ svg.append("path")
 
 function getPopulation(x){
         for (i=0; i<data[1].length; i++){
-            if((data[1][i]['Planning Area'].toUpperCase()) == x){
-                if(data[1][i].Population=='-'){
+            if((data[1][i]['Subzone'].toUpperCase()) == x){
+                if(data[1][i].Population == '-'){
                     return 0
-                }else{
+                }else if(data[1][i].Population == 'undefined'){
+                    return 0
+                }
+                else{
                     return data[1][i].Population
                 }
             }            
         }
     }
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 svg.append("g")
     .attr("id", "districts")
@@ -74,15 +81,15 @@ svg.append("g")
     .attr("stroke", "black")
     .attr("stroke-width", 0.2)
     .attr("fill", function(data){
-        return myColor(getPopulation(data.properties['Planning Area Name'])) })
+        return myColor(getPopulation(data.properties['Subzone Name'])) })
 
     .on("mouseover", (event, d) => {
     d3.select(".tooltip")
     .text(
-        "Name: [" + d.properties.Name.toLowerCase() +"]"
-        + " "
+        "Name: " + capitalizeFirstLetter(d.properties.Name.toLowerCase())
+        + " , "
         + "Population: " 
-        + (getPopulation(d.properties['Planning Area Name']))
+        + (getPopulation(d.properties['Subzone Name']))
         )    
     .style("position", "absolute")
     .style("background", "#fff")
@@ -98,17 +105,6 @@ svg.append("g")
     .attr("stroke-width", "0.2")
     .attr("fill", "orange")
 
-    
-    
-    function getSubzone(x){
-        for (i=0; i<data[1].length; i++){
-            if((data[1][i]['Planning Area'].toUpperCase()) == x){
-                return data[1][i].Subzone
-            }
-            
-        }
-    }
-
     })
     .on("mouseout", (event, d) => {
     d3.select(".tooltip")
@@ -120,7 +116,7 @@ svg.append("g")
     .attr("stroke", "black")
     .attr("stroke-width", 0.2)
     .attr("fill", function(data){
-        return myColor(getPopulation(data.properties['Planning Area Name'])) })
+        return myColor(getPopulation(data.properties['Subzone Name'])) })
     })
 
 // Create the scale
