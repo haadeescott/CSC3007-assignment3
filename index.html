@@ -2,7 +2,15 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <style></style>
+  <style>
+    .tooltip{
+    pointer-events: none;
+    display: inline-block;
+    border: 5px solid #777777;
+    border-width: 2px;
+    border-bottom-color: black;
+}
+  </style>
 </head>
 <body>
     <div class="tooltip"></div>
@@ -32,7 +40,7 @@ var defs = svg.append("defs");
 Promise.all([d3.json('sgmap.json'), d3.csv('population2021.csv')]).then(data => {
 
 var myColor = d3.scaleSequentialLog()
-    .domain([10, 10000])
+    .domain([1, 333])
     .interpolator(d3.interpolatePuRd);
 
 
@@ -56,9 +64,8 @@ function getPopulation(x){
         for (i=0; i<data[1].length; i++){
             if((data[1][i]['Subzone'].toUpperCase()) == x){
                 if(data[1][i].Population == '-'){
-                    return 0
-                }else if(data[1][i].Population == 'undefined'){
-                    return 0
+                    x = 0
+                    return x
                 }
                 else{
                     return data[1][i].Population
