@@ -34,8 +34,6 @@ let svg = d3.select("svg")
 //Append a defs (for definition) element to your SVG
 var defs = svg.append("defs");
 
-
-
 // Load external data
 Promise.all([d3.json('sgmap.json'), d3.csv('population2021.csv')]).then(data => {
 
@@ -51,7 +49,6 @@ var projection = d3.geoMercator()
 
 let geopath = d3.geoPath().projection(projection);
 
-console.log(data[1])
 
 svg.append("path")
         .datum({type: "Sphere"})
@@ -72,12 +69,35 @@ function getPopulation(x){
                 }
             }            
         }
+    } 
+let len_data = data[0].features.length
+let data_f = data[0].features
+
+function new_getPopulation(){
+    for(i=0; i<len_data;i++){
+        for(j=0;j<data[1].length;j++){
+            if(data_f[i].properties['Subzone Name'] == (data[1][j].Subzone).toUpperCase()){
+                x = data[1][j]['Population']
+                if(x == '-'){
+                    x = "0"
+                    data_f[i].properties.description = x
+                }
+                else{
+                    data_f[i].properties.description = x
+                }
+            }
+        }
     }
+}
+
+new_getPopulation()
+
+console.log(data_f)
 
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
-
+// console.log(data[0])
 svg.append("g")
     .attr("id", "districts")
     .selectAll("path")
@@ -87,30 +107,27 @@ svg.append("g")
     .attr("d", geopath)
     .attr("stroke", "black")
     .attr("stroke-width", 0.2)
-    .attr("fill", function(data){
-        return myColor(getPopulation(data.properties['Subzone Name'])) })
-
-    .on("mouseover", (event, d) => {
+    .style("fill", d => d.properties.description === '0' || d.properties.description === null ? 'white' : myColor(d.properties.description))
+    
+        .on("mouseover", (event, d) => {
     d3.select(".tooltip")
     .text(
         "Name: " + capitalizeFirstLetter(d.properties.Name.toLowerCase())
         + " , "
         + "Population: " 
-        + (getPopulation(d.properties['Subzone Name']))
+        + d.properties.description
         )    
     .style("position", "absolute")
     .style("background", "#fff")
     .style("left", (event.pageX) + "px")
     .style("top", (event.pageY) + "px")
-    
-    
 
-    d3.select(event.currentTarget)
-    .transition()
-    .duration(300)
-    .attr("stroke", "white")
-    .attr("stroke-width", "0.2")
-    .attr("fill", "orange")
+        d3.select(event.currentTarget)
+        .transition()
+        .duration(300)
+        .attr("stroke", "white")
+        .attr("stroke-width", "0.2")
+        .style("fill", "orange")
 
     })
     .on("mouseout", (event, d) => {
@@ -122,8 +139,7 @@ svg.append("g")
     .duration(300)
     .attr("stroke", "black")
     .attr("stroke-width", 0.2)
-    .attr("fill", function(data){
-        return myColor(getPopulation(data.properties['Subzone Name'])) })
+    .style("fill", d => d.properties.description === '0' || d.properties.description === null ? 'white' : myColor(d.properties.description))
     })
 
 // Create the scale
@@ -145,15 +161,16 @@ linearGradient
     .attr("y1", "0%")
     .attr("x2", "100%")
     .attr("y2", "0%");
+
 //Set the color for the start (0%)
 linearGradient.append("stop")
     .attr("offset", "0%")
-    .attr("stop-color", d3.interpolatePuRd(0.1)); //light blue
+    .attr("stop-color", d3.interpolatePuRd(0.1)); 
 
 //Set the color for the end (100%)
 linearGradient.append("stop")
     .attr("offset", "100%")
-    .attr("stop-color", d3.interpolatePuRd(1)); //dark blue
+    .attr("stop-color", d3.interpolatePuRd(1)); 
 
 //Draw the rectangle and fill with gradient
 svg.append("rect")
